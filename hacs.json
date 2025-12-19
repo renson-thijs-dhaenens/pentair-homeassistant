@@ -1,5 +1,7 @@
 {
   "name": "Pentair Water Softener",
   "render_readme": true,
-  "homeassistant": "2024.1.0"
+  "homeassistant": "2024.1.0",
+  "content_in_root": false,
+  "icon": "https://raw.githubusercontent.com/renson-thijs-dhaenens/pentair-homeassistant/main/custom_components/pentair_water/icon.png"
 }

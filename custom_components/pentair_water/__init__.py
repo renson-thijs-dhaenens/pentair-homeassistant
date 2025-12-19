@@ -22,16 +22,18 @@ from .const import (
     CONF_EMAIL,
     CONF_EXPIRY,
     CONF_PASSWORD,
+    CONF_SCAN_INTERVAL,
     CONF_UID,
     DATA_API,
     DATA_COORDINATOR,
+    DEFAULT_SCAN_INTERVAL,
     DOMAIN,
     SCAN_INTERVAL,
 )
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.BINARY_SENSOR, Platform.SWITCH]
+PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.BINARY_SENSOR, Platform.SWITCH, Platform.BUTTON]
 
 type PentairWaterConfigEntry = ConfigEntry[PentairWaterData]
 
@@ -71,6 +73,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: PentairWaterConfigEntry)
             response = await hass.async_add_executor_job(api.info)
             response_dashboard = await hass.async_add_executor_job(api.dashboard)
             response_settings = await hass.async_add_executor_job(api.settings)
+            response_flow = await hass.async_add_executor_job(api.flow)
+
+            # Try to get features (may not be available on all devices)
+            try:
+                response_features = await hass.async_add_executor_job(api.features)
+                features = response_features.content if response_features else {}
+            except Exception:
+                features = {}
 
             # Parse total volume - remove unit suffix if present
             total_volume_raw = response.content.get("total_volume", "0")
@@ -81,6 +91,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: PentairWaterConfigEntry)
 
             # Parse settings for vacation mode
             settings = response_settings.content if response_settings else {}
+
+            # Parse flow data
+            flow_data = response_flow.content if response_flow else {}
 
             return {
                 "last_regeneration": response.content.get("last_regeneration"),
@@ -93,17 +106,25 @@ async def async_setup_entry(hass: HomeAssistant, entry: PentairWaterConfigEntry)
                 "status": response_dashboard.content.get("status", {}),
                 "settings": settings,
                 "vacation_mode": settings.get("vacation_mode", False),
+                "features": features,
+                "flow": flow_data,
+                "water_hardness": features.get("water_hardness") or settings.get("water_hardness"),
+                "salt_level": settings.get("salt_level"),
             }
         except Exception as err:
             _LOGGER.error("Error fetching Pentair data: %s", err)
             raise UpdateFailed(f"Error communicating with API: {err}") from err
+
+    # Get scan interval from options, or use default
+    scan_interval_seconds = entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
+    update_interval = timedelta(seconds=scan_interval_seconds)
 
     coordinator = DataUpdateCoordinator(
         hass,
         _LOGGER,
         name=DOMAIN,
         update_method=async_update_data,
-        update_interval=SCAN_INTERVAL,
+        update_interval=update_interval,
     )
 
     # Fetch initial data
@@ -115,7 +136,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: PentairWaterConfigEntry)
     # Forward setup to platforms
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
+    # Register options update listener
+    entry.async_on_unload(entry.add_update_listener(async_update_options))
+
     return True
+
+
+async def async_update_options(hass: HomeAssistant, entry: PentairWaterConfigEntry) -> None:
+    """Handle options update - reload integration to apply new settings."""
+    await hass.config_entries.async_reload(entry.entry_id)
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: PentairWaterConfigEntry) -> bool:

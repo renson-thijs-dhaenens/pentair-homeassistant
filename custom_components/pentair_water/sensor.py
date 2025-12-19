@@ -92,6 +92,15 @@ async def async_setup_entry(
     entities.append(PentairWaterCapacityRemainingSensor(coordinator, entry))
     entities.append(PentairWaterDaysRemainingSensor(coordinator, entry))
 
+    # Add water hardness sensor
+    entities.append(PentairWaterHardnessSensor(coordinator, entry))
+
+    # Add salt level sensor
+    entities.append(PentairWaterSaltLevelSensor(coordinator, entry))
+
+    # Add current flow rate sensor
+    entities.append(PentairWaterCurrentFlowSensor(coordinator, entry))
+
     async_add_entities(entities)
 
 
@@ -288,5 +297,91 @@ class PentairWaterDaysRemainingSensor(PentairWaterEntity, SensorEntity):
 
         status = self.coordinator.data.get("status", {})
         return status.get("days_remaining")
+
+
+class PentairWaterHardnessSensor(PentairWaterEntity, SensorEntity):
+    """Sensor for water hardness setting."""
+
+    _attr_translation_key = "water_hardness"
+    _attr_native_unit_of_measurement = "°dH"
+    _attr_icon = "mdi:water-opacity"
+    _attr_state_class = SensorStateClass.MEASUREMENT
+
+    def __init__(self, coordinator, entry: PentairWaterConfigEntry) -> None:
+        """Initialize the water hardness sensor."""
+        super().__init__(coordinator, entry)
+        self._attr_unique_id = f"{self._device_id}_water_hardness"
+
+    @property
+    def native_value(self) -> float | None:
+        """Return the water hardness."""
+        if self.coordinator.data is None:
+            return None
+
+        hardness = self.coordinator.data.get("water_hardness")
+        if hardness is not None:
+            try:
+                return float(hardness)
+            except (ValueError, TypeError):
+                return None
+        return None
+
+
+class PentairWaterSaltLevelSensor(PentairWaterEntity, SensorEntity):
+    """Sensor for salt level."""
+
+    _attr_translation_key = "salt_level"
+    _attr_native_unit_of_measurement = "%"
+    _attr_icon = "mdi:shaker"
+    _attr_state_class = SensorStateClass.MEASUREMENT
+
+    def __init__(self, coordinator, entry: PentairWaterConfigEntry) -> None:
+        """Initialize the salt level sensor."""
+        super().__init__(coordinator, entry)
+        self._attr_unique_id = f"{self._device_id}_salt_level"
+
+    @property
+    def native_value(self) -> int | None:
+        """Return the salt level percentage."""
+        if self.coordinator.data is None:
+            return None
+
+        salt_level = self.coordinator.data.get("salt_level")
+        if salt_level is not None:
+            try:
+                return int(salt_level)
+            except (ValueError, TypeError):
+                return None
+        return None
+
+
+class PentairWaterCurrentFlowSensor(PentairWaterEntity, SensorEntity):
+    """Sensor for current water flow rate."""
+
+    _attr_translation_key = "current_flow"
+    _attr_native_unit_of_measurement = "L/min"
+    _attr_icon = "mdi:water-pump"
+    _attr_state_class = SensorStateClass.MEASUREMENT
+
+    def __init__(self, coordinator, entry: PentairWaterConfigEntry) -> None:
+        """Initialize the current flow sensor."""
+        super().__init__(coordinator, entry)
+        self._attr_unique_id = f"{self._device_id}_current_flow"
+
+    @property
+    def native_value(self) -> float | None:
+        """Return the current flow rate."""
+        if self.coordinator.data is None:
+            return None
+
+        flow_data = self.coordinator.data.get("flow", {})
+        flow_rate = flow_data.get("flow_rate") or flow_data.get("current_flow") or flow_data.get("value")
+        
+        if flow_rate is not None:
+            try:
+                return float(flow_rate)
+            except (ValueError, TypeError):
+                return None
+        return None
 
 

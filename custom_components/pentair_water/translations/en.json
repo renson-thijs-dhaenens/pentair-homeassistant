@@ -19,6 +19,17 @@
       "already_configured": "This device is already configured"
     }
   },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Pentair Water Softener Options",
+        "description": "Configure the integration settings.",
+        "data": {
+          "scan_interval": "Update interval (seconds)"
+        }
+      }
+    }
+  },
   "entity": {
     "sensor": {
       "total_volume": {
@@ -47,16 +58,33 @@
       },
       "days_remaining": {
         "name": "Days until regeneration"
+      },
+      "water_hardness": {
+        "name": "Water hardness"
+      },
+      "salt_level": {
+        "name": "Salt level"
+      },
+      "current_flow": {
+        "name": "Current flow rate"
       }
     },
     "binary_sensor": {
       "low_salt": {
         "name": "Low salt"
+      },
+      "service_due": {
+        "name": "Service due"
       }
     },
     "switch": {
       "vacation_mode": {
         "name": "Vacation mode"
+      }
+    },
+    "button": {
+      "force_regeneration": {
+        "name": "Force regeneration"
       }
     }
   }

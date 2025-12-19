@@ -1,0 +1,58 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Pentair Water Softener",
+        "description": "Enter your Erie Connect credentials to connect your Pentair water softener.",
+        "data": {
+          "email": "Email",
+          "password": "Password"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect to Erie Connect API",
+      "invalid_auth": "Invalid authentication or no device found",
+      "unknown": "Unexpected error occurred"
+    },
+    "abort": {
+      "already_configured": "This device is already configured"
+    }
+  },
+  "entity": {
+    "sensor": {
+      "total_volume": {
+        "name": "Total volume"
+      },
+      "last_regeneration": {
+        "name": "Last regeneration"
+      },
+      "nr_regenerations": {
+        "name": "Regeneration count"
+      },
+      "last_maintenance": {
+        "name": "Last maintenance"
+      },
+      "warnings": {
+        "name": "Warnings"
+      },
+      "flow": {
+        "name": "Water flow"
+      },
+      "status": {
+        "name": "Status"
+      },
+      "capacity_remaining": {
+        "name": "Capacity remaining"
+      },
+      "days_remaining": {
+        "name": "Days until regeneration"
+      }
+    },
+    "binary_sensor": {
+      "low_salt": {
+        "name": "Low salt"
+      }
+    }
+  }
+}

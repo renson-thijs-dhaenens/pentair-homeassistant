@@ -53,6 +53,11 @@
       "low_salt": {
         "name": "Low salt"
       }
+    },
+    "switch": {
+      "vacation_mode": {
+        "name": "Vacation mode"
+      }
     }
   }
 }

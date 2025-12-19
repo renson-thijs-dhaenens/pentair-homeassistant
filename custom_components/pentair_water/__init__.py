@@ -31,7 +31,7 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.BINARY_SENSOR]
+PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.BINARY_SENSOR, Platform.SWITCH]
 
 type PentairWaterConfigEntry = ConfigEntry[PentairWaterData]
 
@@ -70,6 +70,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: PentairWaterConfigEntry)
         try:
             response = await hass.async_add_executor_job(api.info)
             response_dashboard = await hass.async_add_executor_job(api.dashboard)
+            response_settings = await hass.async_add_executor_job(api.settings)
 
             # Parse total volume - remove unit suffix if present
             total_volume_raw = response.content.get("total_volume", "0")
@@ -77,6 +78,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: PentairWaterConfigEntry)
                 total_volume = total_volume_raw.split()[0]
             else:
                 total_volume = str(total_volume_raw)
+
+            # Parse settings for vacation mode
+            settings = response_settings.content if response_settings else {}
 
             return {
                 "last_regeneration": response.content.get("last_regeneration"),
@@ -87,6 +91,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: PentairWaterConfigEntry)
                 "serial": response.content.get("serial"),
                 "software": response.content.get("software", "").strip(),
                 "status": response_dashboard.content.get("status", {}),
+                "settings": settings,
+                "vacation_mode": settings.get("vacation_mode", False),
             }
         except Exception as err:
             _LOGGER.error("Error fetching Pentair data: %s", err)

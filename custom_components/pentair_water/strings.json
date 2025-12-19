@@ -62,9 +62,6 @@
       "water_hardness": {
         "name": "Water hardness"
       },
-      "salt_level": {
-        "name": "Salt level"
-      },
       "current_flow": {
         "name": "Current flow rate"
       }
@@ -78,8 +75,8 @@
       }
     },
     "switch": {
-      "vacation_mode": {
-        "name": "Vacation mode"
+      "holiday_mode": {
+        "name": "Holiday mode"
       }
     },
     "button": {

@@ -89,27 +89,31 @@ async def async_setup_entry(hass: HomeAssistant, entry: PentairWaterConfigEntry)
             else:
                 total_volume = str(total_volume_raw)
 
-            # Parse settings for vacation mode
+            # Parse settings
             settings = response_settings.content if response_settings else {}
+            settings_inner = settings.get("settings", {})
 
             # Parse flow data
             flow_data = response_flow.content if response_flow else {}
+
+            # Parse dashboard data
+            dashboard = response_dashboard.content if response_dashboard else {}
 
             return {
                 "last_regeneration": response.content.get("last_regeneration"),
                 "nr_regenerations": response.content.get("nr_regenerations"),
                 "last_maintenance": response.content.get("last_maintenance"),
                 "total_volume": total_volume,
-                "warnings": response_dashboard.content.get("warnings", []),
+                "warnings": dashboard.get("warnings", []),
                 "serial": response.content.get("serial"),
                 "software": response.content.get("software", "").strip(),
-                "status": response_dashboard.content.get("status", {}),
+                "status": dashboard.get("status", {}),
                 "settings": settings,
-                "vacation_mode": settings.get("vacation_mode", False),
+                "holiday_mode": dashboard.get("holiday_mode", False),
                 "features": features,
-                "flow": flow_data,
-                "water_hardness": features.get("water_hardness") or settings.get("water_hardness"),
-                "salt_level": settings.get("salt_level"),
+                "flow": flow_data.get("flow", 0),
+                "water_hardness": settings_inner.get("install_hardness"),
+                "regen_time": dashboard.get("meta", {}).get("regen_time"),
             }
         except Exception as err:
             _LOGGER.error("Error fetching Pentair data: %s", err)

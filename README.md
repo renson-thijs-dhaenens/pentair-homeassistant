@@ -43,7 +43,7 @@ Home Assistant integration for Pentair water softeners that use the Erie Connect
 
 ### Manual Installation
 
-1. Copy the `pentair_water` folder to your `custom_components` directory
+1. Copy the `custom_components/pentair_water` folder to your Home Assistant `custom_components` directory
 2. Restart Home Assistant
 
 ## Configuration

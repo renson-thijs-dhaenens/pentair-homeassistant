@@ -10,6 +10,7 @@ from erie_connect.client import ErieConnect
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult, OptionsFlow
 from homeassistant.core import callback
 from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers import selector
 
 from .const import (
     CONF_ACCESS_TOKEN,
@@ -144,11 +145,27 @@ class PentairWaterOptionsFlowHandler(OptionsFlow):
                     vol.Optional(
                         CONF_SCAN_INTERVAL,
                         default=current_interval,
-                    ): vol.All(vol.Coerce(int), vol.Range(min=30, max=3600)),
+                    ): selector.NumberSelector(
+                        selector.NumberSelectorConfig(
+                            min=30,
+                            max=3600,
+                            step=30,
+                            unit_of_measurement="seconds",
+                            mode=selector.NumberSelectorMode.SLIDER,
+                        ),
+                    ),
                     vol.Optional(
                         CONF_FLOW_SCAN_INTERVAL,
                         default=current_flow_interval,
-                    ): vol.All(vol.Coerce(int), vol.Range(min=1, max=60)),
+                    ): selector.NumberSelector(
+                        selector.NumberSelectorConfig(
+                            min=1,
+                            max=60,
+                            step=1,
+                            unit_of_measurement="seconds",
+                            mode=selector.NumberSelectorMode.SLIDER,
+                        ),
+                    ),
                 }
             ),
         )

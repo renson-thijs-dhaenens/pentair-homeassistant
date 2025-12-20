@@ -129,7 +129,9 @@ class PentairWaterSensor(PentairWaterEntity, SensorEntity):
                 try:
                     return datetime.fromisoformat(value.replace("Z", "+00:00"))
                 except (ValueError, AttributeError):
-                    return value
+                    _LOGGER.warning("Failed to parse timestamp value: %s", value)
+                    return None
+            return None
 
         # Handle numeric values
         if self.entity_description.state_class is not None:

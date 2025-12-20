@@ -60,7 +60,7 @@ class PentairWaterConfigFlow(ConfigFlow, domain=DOMAIN):
     @callback
     def async_get_options_flow(config_entry):
         """Get the options flow for this handler."""
-        return PentairWaterOptionsFlowHandler(config_entry)
+        return PentairWaterOptionsFlowHandler()
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
@@ -122,10 +122,6 @@ class InvalidAuth(HomeAssistantError):
 
 class PentairWaterOptionsFlowHandler(OptionsFlow):
     """Handle options flow for Pentair Water Softener."""
-
-    def __init__(self, config_entry):
-        """Initialize options flow."""
-        self.config_entry = config_entry
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None

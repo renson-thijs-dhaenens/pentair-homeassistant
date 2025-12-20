@@ -37,7 +37,7 @@ class PentairWaterHolidayModeSwitch(PentairWaterEntity, SwitchEntity):
     """Representation of Pentair Water Softener holiday mode switch."""
 
     _attr_translation_key = "holiday_mode"
-    _attr_icon = "mdi:airplane"
+
 
     def __init__(self, coordinator, entry: PentairWaterConfigEntry, api) -> None:
         """Initialize the holiday mode switch."""

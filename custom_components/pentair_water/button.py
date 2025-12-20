@@ -35,7 +35,7 @@ class PentairWaterForceRegenerationButton(PentairWaterEntity, ButtonEntity):
     """Button to force regeneration on the water softener."""
 
     _attr_translation_key = "force_regeneration"
-    _attr_icon = "mdi:refresh"
+
 
     def __init__(self, coordinator, entry: PentairWaterConfigEntry, api) -> None:
         """Initialize the button."""

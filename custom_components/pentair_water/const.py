@@ -7,7 +7,7 @@ MANUFACTURER: Final = "Pentair"
 DEFAULT_NAME: Final = "Pentair Water Softener"
 
 # Scan interval for polling
-DEFAULT_SCAN_INTERVAL: Final = 120  # seconds
+DEFAULT_SCAN_INTERVAL: Final = 30  # seconds
 SCAN_INTERVAL: Final = timedelta(seconds=DEFAULT_SCAN_INTERVAL)
 
 # Config entry keys

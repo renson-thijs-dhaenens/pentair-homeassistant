@@ -9,6 +9,7 @@ You'll be prompted for your Erie Connect email and password.
 """
 
 import getpass
+import json
 import sys
 
 try:
@@ -19,11 +20,29 @@ except ImportError:
     sys.exit(1)
 
 
+def pretty_print_dict(d, indent=3):
+    """Pretty print a dictionary."""
+    for key, value in d.items():
+        if isinstance(value, dict):
+            print(" " * indent + f"{key}:")
+            pretty_print_dict(value, indent + 3)
+        elif isinstance(value, list):
+            print(" " * indent + f"{key}: [")
+            for item in value:
+                if isinstance(item, dict):
+                    pretty_print_dict(item, indent + 6)
+                else:
+                    print(" " * (indent + 6) + str(item))
+            print(" " * indent + "]")
+        else:
+            print(" " * indent + f"{key}: {value}")
+
+
 def test_connection():
     """Test connection to Erie Connect API."""
-    print("=" * 60)
-    print("Pentair Water Softener - Connection Test")
-    print("=" * 60)
+    print("=" * 70)
+    print("Pentair Water Softener - Full API Data Dump")
+    print("=" * 70)
     print()
     
     # Get credentials
@@ -65,41 +84,82 @@ def test_connection():
         print(f"   Device ID: {api.device.id}")
         print(f"   Device Name: {api.device.name}")
         
-        # Get device info
+        # ===== INFO ENDPOINT =====
         print()
-        print("🔄 Fetching device data...")
+        print("=" * 70)
+        print("📊 INFO ENDPOINT (api.info())")
+        print("=" * 70)
         info = api.info()
+        print("RAW DATA:")
+        pretty_print_dict(info.content)
         
-        print("✅ Device data retrieved!")
+        # ===== DASHBOARD ENDPOINT =====
         print()
-        print("📊 Device Statistics:")
-        print(f"   Last Regeneration: {info.content.get('last_regeneration', 'N/A')}")
-        print(f"   Number of Regenerations: {info.content.get('nr_regenerations', 'N/A')}")
-        print(f"   Last Maintenance: {info.content.get('last_maintenance', 'N/A')}")
-        print(f"   Total Volume: {info.content.get('total_volume', 'N/A')}")
-        
-        # Get dashboard
-        print()
-        print("🔄 Fetching dashboard data...")
+        print("=" * 70)
+        print("📊 DASHBOARD ENDPOINT (api.dashboard())")
+        print("=" * 70)
         dashboard = api.dashboard()
+        print("RAW DATA:")
+        pretty_print_dict(dashboard.content)
         
-        print("✅ Dashboard data retrieved!")
-        warnings = dashboard.content.get('warnings', [])
+        # ===== SETTINGS ENDPOINT =====
+        print()
+        print("=" * 70)
+        print("📊 SETTINGS ENDPOINT (api.settings())")
+        print("=" * 70)
+        settings = api.settings()
+        print("RAW DATA:")
+        pretty_print_dict(settings.content)
         
-        if warnings:
-            print()
-            print("⚠️  Warnings:")
-            for warning in warnings:
-                print(f"   - {warning.get('description', 'Unknown warning')}")
-        else:
-            print("   No warnings")
+        # ===== FLOW ENDPOINT =====
+        print()
+        print("=" * 70)
+        print("📊 FLOW ENDPOINT (api.flow())")
+        print("=" * 70)
+        flow = api.flow()
+        print("RAW DATA:")
+        pretty_print_dict(flow.content)
+        
+        # ===== FEATURES ENDPOINT =====
+        print()
+        print("=" * 70)
+        print("📊 FEATURES ENDPOINT (api.features())")
+        print("=" * 70)
+        try:
+            features = api.features()
+            print("RAW DATA:")
+            pretty_print_dict(features.content)
+        except Exception as e:
+            print(f"   Not available or error: {e}")
+        
+        # ===== STATISTICS ENDPOINT (if available) =====
+        print()
+        print("=" * 70)
+        print("📊 STATISTICS ENDPOINT (api.statistics() - if available)")
+        print("=" * 70)
+        try:
+            statistics = api.statistics()
+            print("RAW DATA:")
+            pretty_print_dict(statistics.content)
+        except Exception as e:
+            print(f"   Not available or error: {e}")
+        
+        # ===== STATUS ENDPOINT (if available) =====
+        print()
+        print("=" * 70)
+        print("📊 STATUS ENDPOINT (api.status() - if available)")
+        print("=" * 70)
+        try:
+            status = api.status()
+            print("RAW DATA:")
+            pretty_print_dict(status.content)
+        except Exception as e:
+            print(f"   Not available or error: {e}")
         
         print()
-        print("=" * 60)
-        print("✅ All tests passed! Your device is compatible.")
-        print("=" * 60)
-        print()
-        print("You can now install the integration in Home Assistant.")
+        print("=" * 70)
+        print("✅ All API data retrieved successfully!")
+        print("=" * 70)
         print()
         
         return True
@@ -107,6 +167,8 @@ def test_connection():
     except Exception as e:
         print()
         print(f"❌ Error: {e}")
+        import traceback
+        traceback.print_exc()
         print()
         print("Possible causes:")
         print("  - Invalid email or password")

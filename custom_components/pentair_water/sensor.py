@@ -74,6 +74,7 @@ async def async_setup_entry(
 ) -> None:
     """Set up Pentair Water Softener sensors."""
     coordinator = entry.runtime_data.coordinator
+    flow_coordinator = entry.runtime_data.flow_coordinator
 
     entities: list[SensorEntity] = []
 
@@ -84,9 +85,6 @@ async def async_setup_entry(
     # Add warnings sensor
     entities.append(PentairWaterWarningsSensor(coordinator, entry))
 
-    # Add flow sensor (cumulative)
-    entities.append(PentairWaterFlowSensor(coordinator, entry))
-
     # Add status sensors
     entities.append(PentairWaterStatusSensor(coordinator, entry))
     entities.append(PentairWaterCapacityRemainingSensor(coordinator, entry))
@@ -95,8 +93,8 @@ async def async_setup_entry(
     # Add water hardness sensor
     entities.append(PentairWaterHardnessSensor(coordinator, entry))
 
-    # Add current flow rate sensor
-    entities.append(PentairWaterCurrentFlowSensor(coordinator, entry))
+    # Add current flow rate sensor (uses fast-polling flow coordinator)
+    entities.append(PentairWaterCurrentFlowSensor(flow_coordinator, entry))
 
     async_add_entities(entities)
 
@@ -172,45 +170,6 @@ class PentairWaterWarningsSensor(PentairWaterEntity, SensorEntity):
         return warning_text.strip() if warning_text else None
 
 
-class PentairWaterFlowSensor(PentairWaterEntity, SensorEntity):
-    """Sensor for water flow calculation."""
-
-    _attr_translation_key = "flow"
-    _attr_native_unit_of_measurement = UnitOfVolume.LITERS
-    _attr_device_class = SensorDeviceClass.WATER
-    _attr_state_class = SensorStateClass.TOTAL_INCREASING
-
-    def __init__(self, coordinator, entry: PentairWaterConfigEntry) -> None:
-        """Initialize the flow sensor."""
-        super().__init__(coordinator, entry)
-        self._attr_unique_id = f"{self._device_id}_flow"
-        self._previous_value: int | None = None
-
-    @property
-    def native_value(self) -> int:
-        """Return the flow since last update."""
-        if self.coordinator.data is None:
-            return 0
-
-        current_value_str = self.coordinator.data.get(ATTR_TOTAL_VOLUME)
-        if current_value_str is None:
-            return 0
-
-        try:
-            current_value = int(str(current_value_str).split()[0])
-        except (ValueError, TypeError):
-            return 0
-
-        if self._previous_value is None:
-            self._previous_value = current_value
-            return 0
-
-        flow = current_value - self._previous_value
-        self._previous_value = current_value
-
-        return max(0, flow)  # Ensure non-negative
-
-
 class PentairWaterStatusSensor(PentairWaterEntity, SensorEntity):
     """Sensor for device status."""
 
@@ -263,14 +222,24 @@ class PentairWaterCapacityRemainingSensor(PentairWaterEntity, SensorEntity):
             return None
 
         status = self.coordinator.data.get("status", {})
+        _LOGGER.debug("Capacity remaining - status data: %s", status)
+        
+        # Try to get capacity from extra field (format: "1162 L")
         extra = status.get("extra", "")
-
         if extra:
             try:
                 # Parse "1162 L" format
-                return int(extra.split()[0])
-            except (ValueError, IndexError):
-                return None
+                value = int(extra.split()[0])
+                _LOGGER.debug("Capacity remaining from extra: %s", value)
+                return value
+            except (ValueError, IndexError) as err:
+                _LOGGER.debug("Failed to parse extra '%s': %s", extra, err)
+        
+        # Try percentage-based calculation if we have max capacity info
+        percentage = status.get("percentage")
+        if percentage is not None:
+            _LOGGER.debug("Capacity remaining - percentage: %s", percentage)
+        
         return None
 
 
@@ -301,7 +270,6 @@ class PentairWaterHardnessSensor(PentairWaterEntity, SensorEntity):
 
     _attr_translation_key = "water_hardness"
     _attr_native_unit_of_measurement = "°dH"
-    _attr_icon = "mdi:water-opacity"
     _attr_state_class = SensorStateClass.MEASUREMENT
 
     def __init__(self, coordinator, entry: PentairWaterConfigEntry) -> None:
@@ -329,7 +297,6 @@ class PentairWaterCurrentFlowSensor(PentairWaterEntity, SensorEntity):
 
     _attr_translation_key = "current_flow"
     _attr_native_unit_of_measurement = "L/min"
-    _attr_icon = "mdi:water-pump"
     _attr_state_class = SensorStateClass.MEASUREMENT
 
     def __init__(self, coordinator, entry: PentairWaterConfigEntry) -> None:

@@ -70,7 +70,6 @@ class PentairWaterServiceDueSensor(PentairWaterEntity, BinarySensorEntity):
 
     _attr_translation_key = "service_due"
     _attr_device_class = BinarySensorDeviceClass.PROBLEM
-    _attr_icon = "mdi:wrench-clock"
 
     def __init__(self, coordinator, entry: PentairWaterConfigEntry) -> None:
         """Initialize the binary sensor."""

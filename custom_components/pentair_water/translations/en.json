@@ -47,9 +47,6 @@
       "warnings": {
         "name": "Warnings"
       },
-      "flow": {
-        "name": "Water flow"
-      },
       "status": {
         "name": "Status"
       },

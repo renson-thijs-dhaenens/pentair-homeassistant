@@ -8,6 +8,7 @@ DEFAULT_NAME: Final = "Pentair Water Softener"
 
 # Scan interval for polling
 DEFAULT_SCAN_INTERVAL: Final = 30  # seconds
+DEFAULT_FLOW_SCAN_INTERVAL: Final = 5  # seconds
 SCAN_INTERVAL: Final = timedelta(seconds=DEFAULT_SCAN_INTERVAL)
 
 # Config entry keys
@@ -20,6 +21,7 @@ CONF_EXPIRY: Final = "expiry"
 CONF_DEVICE_ID: Final = "device_id"
 CONF_DEVICE_NAME: Final = "device_name"
 CONF_SCAN_INTERVAL: Final = "scan_interval"
+CONF_FLOW_SCAN_INTERVAL: Final = "flow_scan_interval"
 
 # Data keys
 DATA_COORDINATOR: Final = "coordinator"

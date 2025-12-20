@@ -18,9 +18,11 @@ from .const import (
     CONF_DEVICE_NAME,
     CONF_EMAIL,
     CONF_EXPIRY,
+    CONF_FLOW_SCAN_INTERVAL,
     CONF_PASSWORD,
     CONF_SCAN_INTERVAL,
     CONF_UID,
+    DEFAULT_FLOW_SCAN_INTERVAL,
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
 )
@@ -135,6 +137,9 @@ class PentairWaterOptionsFlowHandler(OptionsFlow):
         current_interval = self.config_entry.options.get(
             CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL
         )
+        current_flow_interval = self.config_entry.options.get(
+            CONF_FLOW_SCAN_INTERVAL, DEFAULT_FLOW_SCAN_INTERVAL
+        )
 
         return self.async_show_form(
             step_id="init",
@@ -144,6 +149,10 @@ class PentairWaterOptionsFlowHandler(OptionsFlow):
                         CONF_SCAN_INTERVAL,
                         default=current_interval,
                     ): vol.All(vol.Coerce(int), vol.Range(min=30, max=3600)),
+                    vol.Optional(
+                        CONF_FLOW_SCAN_INTERVAL,
+                        default=current_flow_interval,
+                    ): vol.All(vol.Coerce(int), vol.Range(min=1, max=60)),
                 }
             ),
         )

@@ -21,11 +21,13 @@ from .const import (
     CONF_DEVICE_NAME,
     CONF_EMAIL,
     CONF_EXPIRY,
+    CONF_FLOW_SCAN_INTERVAL,
     CONF_PASSWORD,
     CONF_SCAN_INTERVAL,
     CONF_UID,
     DATA_API,
     DATA_COORDINATOR,
+    DEFAULT_FLOW_SCAN_INTERVAL,
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
     SCAN_INTERVAL,
@@ -133,6 +135,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: PentairWaterConfigEntry)
     # Get scan interval from options, or use default
     scan_interval_seconds = entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
     update_interval = timedelta(seconds=scan_interval_seconds)
+    
+    flow_scan_interval_seconds = entry.options.get(CONF_FLOW_SCAN_INTERVAL, DEFAULT_FLOW_SCAN_INTERVAL)
+    flow_update_interval = timedelta(seconds=flow_scan_interval_seconds)
 
     coordinator = DataUpdateCoordinator(
         hass,
@@ -161,7 +166,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: PentairWaterConfigEntry)
         _LOGGER,
         name=f"{DOMAIN}_flow",
         update_method=async_update_flow_data,
-        update_interval=timedelta(seconds=5),  # Fast updates for flow
+        update_interval=flow_update_interval,  # Configurable fast updates for flow
     )
 
     # Fetch initial data

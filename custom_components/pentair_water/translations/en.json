@@ -25,7 +25,8 @@
         "title": "Pentair Water Softener Options",
         "description": "Configure the integration settings.",
         "data": {
-          "scan_interval": "Update interval (seconds)"
+          "scan_interval": "Update interval (seconds)",
+          "flow_scan_interval": "Flow rate update interval (seconds)"
         }
       }
     }

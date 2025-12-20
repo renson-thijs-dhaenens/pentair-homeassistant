@@ -269,7 +269,7 @@ class PentairWaterHardnessSensor(PentairWaterEntity, SensorEntity):
     """Sensor for water hardness setting."""
 
     _attr_translation_key = "water_hardness"
-    _attr_native_unit_of_measurement = "°dH"
+    _attr_native_unit_of_measurement = "°fH"
     _attr_state_class = SensorStateClass.MEASUREMENT
 
     def __init__(self, coordinator, entry: PentairWaterConfigEntry) -> None:
@@ -279,13 +279,14 @@ class PentairWaterHardnessSensor(PentairWaterEntity, SensorEntity):
 
     @property
     def native_value(self) -> float | None:
-        """Return the water hardness."""
+        """Return the water hardness in French degrees."""
         if self.coordinator.data is None:
             return None
 
         hardness = self.coordinator.data.get("water_hardness")
         if hardness is not None:
             try:
+                # API returns French degrees (°fH) directly
                 return float(hardness)
             except (ValueError, TypeError):
                 return None

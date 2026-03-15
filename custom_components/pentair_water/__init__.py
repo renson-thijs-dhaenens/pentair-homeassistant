@@ -7,6 +7,7 @@ from datetime import timedelta
 from typing import Any
 
 from erie_connect.client import ErieConnect
+from requests import RequestException
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
@@ -70,17 +71,44 @@ async def async_setup_entry(hass: HomeAssistant, entry: PentairWaterConfigEntry)
         ),
     )
 
+    def _safe_api_call(api_method):
+        """Call an API method, retrying once with fresh login on auth failure.
+
+        The erie_connect library has a bug in _request(): when an HTTPError
+        with status != 401 occurs, the method falls through without returning,
+        yielding None. This causes AttributeError in _setup_if_needed() ->
+        select_first_active_device() when it tries response.content[0] on None.
+
+        This wrapper catches that and forces a fresh login before retrying.
+        """
+        try:
+            result = api_method()
+            if result is None:
+                raise AttributeError("API returned None response")
+            return result
+        except (AttributeError, RequestException):
+            _LOGGER.debug("API call %s failed, forcing re-login", getattr(api_method, '__name__', str(api_method)))
+            try:
+                api._auth = None
+                api._device = None
+                api.login()
+                api.select_first_active_device()
+                return api_method()
+            except Exception as retry_err:
+                _LOGGER.warning("Re-login and retry failed for %s: %s", getattr(api_method, '__name__', str(api_method)), retry_err)
+                return None
+
     async def async_update_data() -> dict[str, Any]:
         """Fetch data from API endpoint."""
         try:
-            response = await hass.async_add_executor_job(api.info)
-            response_dashboard = await hass.async_add_executor_job(api.dashboard)
-            response_settings = await hass.async_add_executor_job(api.settings)
-            response_flow = await hass.async_add_executor_job(api.flow)
+            response = await hass.async_add_executor_job(_safe_api_call, api.info)
+            response_dashboard = await hass.async_add_executor_job(_safe_api_call, api.dashboard)
+            response_settings = await hass.async_add_executor_job(_safe_api_call, api.settings)
+            response_flow = await hass.async_add_executor_job(_safe_api_call, api.flow)
 
             # Try to get features (may not be available on all devices)
             try:
-                response_features = await hass.async_add_executor_job(api.features)
+                response_features = await hass.async_add_executor_job(_safe_api_call, api.features)
                 features = getattr(response_features, "content", None) or {}
             except Exception:
                 features = {}
@@ -155,7 +183,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: PentairWaterConfigEntry)
     async def async_update_flow_data() -> dict[str, Any]:
         """Fetch flow data from API endpoint."""
         try:
-            response_flow = await hass.async_add_executor_job(api.flow)
+            response_flow = await hass.async_add_executor_job(_safe_api_call, api.flow)
             flow_data = getattr(response_flow, "content", None) or {}
             _LOGGER.debug("RAW API flow (fast poll): %s", flow_data)
             return {

@@ -81,19 +81,19 @@ async def async_setup_entry(hass: HomeAssistant, entry: PentairWaterConfigEntry)
             # Try to get features (may not be available on all devices)
             try:
                 response_features = await hass.async_add_executor_job(api.features)
-                features = response_features.content if response_features else {}
+                features = getattr(response_features, "content", None) or {}
             except Exception:
                 features = {}
 
-            # Guard against None responses
-            info = response.content if response else {}
-            dashboard_data = response_dashboard.content if response_dashboard else {}
+            # Guard against None responses (response or response.content can be None)
+            info = getattr(response, "content", None) or {}
+            dashboard_data = getattr(response_dashboard, "content", None) or {}
 
             # Log raw API responses for debugging
             _LOGGER.debug("RAW API info: %s", info)
             _LOGGER.debug("RAW API dashboard: %s", dashboard_data)
-            _LOGGER.debug("RAW API settings: %s", response_settings.content if response_settings else {})
-            _LOGGER.debug("RAW API flow: %s", response_flow.content if response_flow else {})
+            _LOGGER.debug("RAW API settings: %s", getattr(response_settings, "content", None) or {})
+            _LOGGER.debug("RAW API flow: %s", getattr(response_flow, "content", None) or {})
 
             # Parse total volume - remove unit suffix if present
             total_volume_raw = info.get("total_volume", "0")
@@ -103,11 +103,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: PentairWaterConfigEntry)
                 total_volume = str(total_volume_raw)
 
             # Parse settings
-            settings = response_settings.content if response_settings else {}
+            settings = getattr(response_settings, "content", None) or {}
             settings_inner = settings.get("settings", {})
 
             # Parse flow data
-            flow_data = response_flow.content if response_flow else {}
+            flow_data = getattr(response_flow, "content", None) or {}
 
             # Parse dashboard data
             dashboard = dashboard_data
@@ -156,7 +156,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: PentairWaterConfigEntry)
         """Fetch flow data from API endpoint."""
         try:
             response_flow = await hass.async_add_executor_job(api.flow)
-            flow_data = response_flow.content if response_flow else {}
+            flow_data = getattr(response_flow, "content", None) or {}
             _LOGGER.debug("RAW API flow (fast poll): %s", flow_data)
             return {
                 "flow": flow_data.get("flow", 0),

@@ -85,14 +85,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: PentairWaterConfigEntry)
             except Exception:
                 features = {}
 
+            # Guard against None responses
+            info = response.content if response else {}
+            dashboard_data = response_dashboard.content if response_dashboard else {}
+
             # Log raw API responses for debugging
-            _LOGGER.debug("RAW API info: %s", response.content)
-            _LOGGER.debug("RAW API dashboard: %s", response_dashboard.content)
-            _LOGGER.debug("RAW API settings: %s", response_settings.content)
-            _LOGGER.debug("RAW API flow: %s", response_flow.content)
+            _LOGGER.debug("RAW API info: %s", info)
+            _LOGGER.debug("RAW API dashboard: %s", dashboard_data)
+            _LOGGER.debug("RAW API settings: %s", response_settings.content if response_settings else {})
+            _LOGGER.debug("RAW API flow: %s", response_flow.content if response_flow else {})
 
             # Parse total volume - remove unit suffix if present
-            total_volume_raw = response.content.get("total_volume", "0")
+            total_volume_raw = info.get("total_volume", "0")
             if isinstance(total_volume_raw, str):
                 total_volume = total_volume_raw.split()[0]
             else:
@@ -106,20 +110,20 @@ async def async_setup_entry(hass: HomeAssistant, entry: PentairWaterConfigEntry)
             flow_data = response_flow.content if response_flow else {}
 
             # Parse dashboard data
-            dashboard = response_dashboard.content if response_dashboard else {}
+            dashboard = dashboard_data
 
             # Log status specifically for debugging capacity_remaining
             status_data = dashboard.get("status", {})
             _LOGGER.debug("Dashboard status data: %s", status_data)
 
             return {
-                "last_regeneration": response.content.get("last_regeneration"),
-                "nr_regenerations": response.content.get("nr_regenerations"),
-                "last_maintenance": response.content.get("last_maintenance"),
+                "last_regeneration": info.get("last_regeneration"),
+                "nr_regenerations": info.get("nr_regenerations"),
+                "last_maintenance": info.get("last_maintenance"),
                 "total_volume": total_volume,
                 "warnings": dashboard.get("warnings", []),
-                "serial": response.content.get("serial"),
-                "software": response.content.get("software", "").strip(),
+                "serial": info.get("serial"),
+                "software": info.get("software", "").strip(),
                 "status": status_data,
                 "settings": settings,
                 "holiday_mode": dashboard.get("holiday_mode", False),
